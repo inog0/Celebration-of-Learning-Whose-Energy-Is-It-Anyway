@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Which Energy Is It Anyway?</title>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI, Arial, sans-serif;
+background:linear-gradient(135deg,#1f2937,#0f172a);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+/* TITLE SCREEN */
+#titleScreen{text-align:center;}
+#titleScreen h1{font-size:60px;margin-bottom:30px;}
+#startButton{
+  padding:18px 40px;
+  font-size:24px;
+  border:none;
+  border-radius:10px;
+  background:#22c55e;
+  color:white;
+  cursor:pointer;
+}
+#startButton:hover{background:#16a34a;}
+
+/* GAME */
+.game-container{
+width:1000px;
+max-width:95%;
+background:#111827;
+border-radius:14px;
+padding:40px;
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
+text-align:center;
+display:none;
+}
+
+h1{margin-top:0;font-size:42px;}
+
+#clueBox{
+margin:30px auto;
+padding:30px;
+background:#1f2937;
+border-radius:10px;
+font-size:26px;
+min-height:100px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.buttons{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:18px;
+margin-top:25px;
+}
+
+.energyButton{
+padding:18px;
+font-size:17px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+transition:0.2s;
+}
+
+.energyButton:hover{background:#1d4ed8;}
+.energyButton:disabled{cursor:default;}
+
+/* NEW FEEDBACK COLORS */
+.correctBtn{
+background:#22c55e !important;
+}
+
+.wrongBtn{
+background:#ef4444 !important;
+}
+
+#result{margin-top:25px;font-size:26px;height:40px;}
+
+#next{
+margin-top:15px;
+padding:12px 24px;
+font-size:16px;
+border:none;
+border-radius:8px;
+background:#22c55e;
+color:white;
+cursor:pointer;
+display:none;
+}
+
+#giveUp{
+margin-top:10px;
+padding:12px 24px;
+font-size:16px;
+border:none;
+border-radius:8px;
+background:#ef4444;
+color:white;
+cursor:pointer;
+}
+
+#score{margin-top:20px;font-size:20px;color:#d1d5db;}
+#progress{font-size:18px;color:#9ca3af;margin-top:10px;}
+
+/* END SCREEN */
+#endScreen{display:none;text-align:center;}
+#endScreen h1{font-size:60px;}
+#finalScore{font-size:40px;margin:20px 0;}
+
+#replayButton{
+padding:18px 40px;
+font-size:24px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
+/* confetti */
+.confetti{
+position:fixed;
+width:8px;
+height:8px;
+top:-10px;
+animation:fall linear forwards;
+}
+@keyframes fall{
+to{
+transform:translateY(110vh) rotate(720deg);
+opacity:0;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div id="titleScreen">
+<h1>Which Energy Is It Anyway?</h1>
+<button id="startButton" onclick="startGame()">Start Game</button>
+</div>
+
+<div class="game-container" id="gameContainer">
+<h1>Which Energy Is It Anyway?</h1>
+
+<div id="clueBox"></div>
+<div class="buttons" id="buttons"></div>
+
+<div id="result"></div>
+
+<button id="next" onclick="nextRound()">Next Round</button><br>
+<button id="giveUp" onclick="giveUp()">Give Up</button>
+
+<div id="score">Score: 0</div>
+<div id="progress"></div>
+</div>
+
+<div id="endScreen">
+<h1>Game Over!</h1>
+<div id="finalScore"></div>
+<button id="replayButton" onclick="replayGame()">Replay Game</button>
+</div>
+
+<script>
+const clues = [
+{clue:"Cloudy and rainy days will slow down energy production.", answer:"Solar Energy"},
+{clue:"Dangerous to birds and bats.", answer:"Wind Energy"},
+{clue:"Movement of water downhill spins turbines to create electricity.", answer:"Hydro Energy"},
+{clue:"Leads to waste that stays for thousands of years.", answer:"Nuclear Power"},
+{clue:"Comes from recent plant and animal material.", answer:"Biomass Energy"},
+{clue:"Involves the moon.", answer:"Tidal Energy"},
+{clue:"Uses heat from inside the Earth.", answer:"Geothermal Energy"},
+{clue:"Comes from the remains of plants and animals that lived many years ago.", answer:"Fossil Fuels"}
+];
+
+const energyTypes=[
+"Solar Energy","Wind Energy","Hydro Energy","Nuclear Power","Biomass Energy","Tidal Energy","Geothermal Energy","Fossil Fuels"
+];
+
+let remaining=[...clues];
+let current;
+let score=0;
+let answered=0;
+
+function startGame(){
+document.getElementById("titleScreen").style.display="none";
+document.getElementById("gameContainer").style.display="block";
+generateButtons();
+nextRound();
+}
+
+function generateButtons(){
+const container=document.getElementById("buttons");
+container.innerHTML="";
+energyTypes.forEach(type=>{
+const btn=document.createElement("button");
+btn.className="energyButton";
+btn.innerText=type;
+btn.dataset.type = type;
+btn.onclick=()=>checkAnswer(btn);
+container.appendChild(btn);
+});
+}
+
+function nextRound(){
+document.getElementById("result").innerText="";
+document.getElementById("next").style.display="none";
+
+document.querySelectorAll(".energyButton").forEach(b=>{
+b.disabled=false;
+b.classList.remove("correctBtn","wrongBtn");
+});
+
+if(remaining.length===0){endGame(); return}
+
+const index=Math.floor(Math.random()*remaining.length);
+current=remaining.splice(index,1)[0];
+
+document.getElementById("clueBox").innerText=current.clue;
+document.getElementById("progress").innerText="Clues Remaining: "+remaining.length;
+}
+
+function checkAnswer(clickedBtn){
+document.querySelectorAll(".energyButton").forEach(b=>b.disabled=true);
+
+answered++;
+
+if(clickedBtn.dataset.type === current.answer){
+score++;
+clickedBtn.classList.add("correctBtn");
+document.getElementById("result").innerText="Correct!";
+confetti();
+}else{
+clickedBtn.classList.add("wrongBtn");
+document.getElementById("result").innerText="Incorrect";
+
+// highlight correct one too
+document.querySelectorAll(".energyButton").forEach(b=>{
+if(b.dataset.type === current.answer){
+b.classList.add("correctBtn");
+}
+});
+}
+
+document.getElementById("score").innerText="Score: "+score;
+document.getElementById("next").style.display="inline-block";
+}
+
+function giveUp(){
+endGame(true);
+}
+
+function endGame(gaveUp=false){
+document.getElementById("gameContainer").style.display="none";
+document.getElementById("endScreen").style.display="block";
+
+let total = gaveUp ? answered : clues.length;
+
+document.getElementById("finalScore").innerText =
+"You got " + score + " out of " + total + " correct";
+}
+
+function replayGame(){
+score=0;
+answered=0;
+remaining=[...clues];
+document.getElementById("score").innerText="Score: 0";
+document.getElementById("endScreen").style.display="none";
+document.getElementById("gameContainer").style.display="block";
+nextRound();
+}
+
+function confetti(){
+for(let i=0;i<60;i++){
+const piece=document.createElement("div");
+piece.className="confetti";
+piece.style.left=Math.random()*100+"vw";
+piece.style.background=`hsl(${Math.random()*360},70%,55%)`;
+piece.style.animationDuration=(Math.random()*1.5+1.5)+"s";
+document.body.appendChild(piece);
+setTimeout(()=>piece.remove(),2500);
+}
+}
+</script>
+
+</body>
+</html>
